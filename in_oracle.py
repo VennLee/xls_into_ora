@@ -52,27 +52,42 @@ class in_oracle():
         with open(self.file_path, 'rb') as f:
             reader = csv.reader(f)
             j=0
+            content=[]
             for line in reader:
                 if j==0:
                     j=j+1
                     continue
                 j=j+1
-                a = [':%s' %i for i in range(len(self.get_title())+1)]
-                value= ','.join(a[1:])
-                sql = 'insert into %s values(%s)' %(self.table_name, value)
-                cursor.execute(sql,line)
-                if j%20000==0:
+                content.append(tuple(line))
+                if j%40000==0:
+                    a = [':%s' %i for i in range(len(self.get_title())+1)]
+                    value= ','.join(a[1:])
+                    sql = 'insert into %s values(%s)' %(self.table_name, value)
+                    cursor.executemany(sql,content)
+                    conn.commit()
+                    content=[]
                     conn.commit()
                     print str(j-1)+'行已经插入'
-        cursor.close()
-        conn.commit()
-        conn.close()
-        print '数据插入完成'
+                # if j%20000==0:
+                #     conn.commit()
+                #     print str(j-1)+'行已经插入'
+            a = [':%s' %i for i in range(len(self.get_title())+1)]
+            value= ','.join(a[1:])
+            sql = 'insert into %s values(%s)' %(self.table_name, value)
+            cursor.executemany(sql,content)
+            conn.commit()
+            conn.commit()
+            print str(j-1)+'行已经插入'
+
+            cursor.close()
+            conn.commit()
+            conn.close()
+            print '数据插入完成'
 
 if __name__=='__main__':
     con_str='BI/111111@ORCL'
-    file_path='F:\\cnty_location.csv'
-    table_name='ttttt2'
+    file_path='F:\\ordrs.csv'
+    table_name='u_ordrs'
     io=in_oracle(con_str,file_path,table_name) #创建连接数据库的实例
     io.create_table(io.get_title()) #建表
     io.insert_date() #插入数据
